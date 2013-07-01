@@ -55,7 +55,7 @@ class WialonError(Exception):
 
 
 class Wialon(object):
-    def __init__(self, scheme='http',  host="hst-api.wialon.com", port=8000, sid=None, **extra_params):
+    def __init__(self, scheme='http',  host="hst-api.wialon.com", port=80, sid=None, **extra_params):
         """
         Created the Wialon API object.
         """
