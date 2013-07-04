@@ -1,8 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import urllib
-import urllib2
+try:
+    from urllib import urlencode
+except Exception:
+    from urllib.parse import urlencode
+
+try:
+    from urllib2 import Request, urlopen, HTTPError, URLError
+except ImportError:
+    from urllib.request import Request, urlopen
+    from urllib.error import HTTPError, URLError
 
 try:
     import simplejson as json
@@ -105,19 +113,20 @@ class Wialon(object):
 
         all_params = self.__default_params.copy()
         all_params.update(params)
-        url_params = urllib.urlencode(all_params)
+        url_params = urlencode(all_params)
 
+        data = url_params.encode('utf-8')
         try:
-            request = urllib2.Request(url, url_params)
-            response = urllib2.urlopen(request)
+            request = Request(url, data)
+            response = urlopen(request)
             response_content = response.read()
-        except urllib2.HTTPError as e:
+        except HTTPError as e:
             raise WialonError(0, u"HTTP {code}".format(code=e.code))
-        except urllib2.URLError as e:
+        except URLError as e:
             raise WialonError(0, unicode(e))
 
         try:
-            result = json.loads(response_content)
+            result = json.loads(response_content.decode('utf-8'))
         except ValueError as e:
             raise WialonError(
                 u"Invalid response from Wialon: {0}".format(e),
@@ -146,4 +155,12 @@ class Wialon(object):
             return self.call(action_name, *args, **kwargs)
 
         return get.__get__(self)
-    
+
+
+if __name__ == '__main__':
+    try:
+        wialon_api = Wialon()
+        result = wialon_api.core_login(user='wialon_test', password='test')
+        wialon_api.sid = result['eid']
+    except WialonError:
+        pass

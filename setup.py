@@ -1,7 +1,14 @@
 #!/usr/bin/env python
+import sys
+import wialon
+
 from setuptools import setup, find_packages
 
-import wialon
+
+extra = {}
+if sys.version_info >= (3,):
+    extra['use_2to3'] = True
+    extra['convert_2to3_doctests'] = ['README.md']
 
 CLASSIFIERS = [
     'Development Status :: 5 - Production/Stable',
