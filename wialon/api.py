@@ -48,11 +48,11 @@ class WialonError(Exception):
             pass
 
     def __unicode__(self):
+        explanation = self._text
         if (self._code in WialonError.errors):
-            self._text = " ".join([WialonError.errors[self._code], self._text])
+            explanation = " ".join([WialonError.errors[self._code], self._text])
 
-        message = u'{error} ({code})'.format(error=self._text,
-                                             code=self._code)
+        message = u'{error} ({code})'.format(error=explanation, code=self._code)
         return u'WialonError({message})'.format(message=message)
 
     def __str__(self):
