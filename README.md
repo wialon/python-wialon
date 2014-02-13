@@ -17,7 +17,8 @@ try:
     wialon_api = Wialon()
     result = wialon_api.core_login(user='YOUR WIALON USER LOIGN', password='YOUR WIALON USER PASSWORD')
     wialon_api.sid = result['eid']
-except WialonError:
+    result = wialon_api.avl_evts()
+except WialonError as e:
     pass
 ```
     
