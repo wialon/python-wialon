@@ -18,9 +18,8 @@ try:
     result = wialon_api.core_login(user='YOUR WIALON USER LOIGN', password='YOUR WIALON USER PASSWORD')
     wialon_api.sid = result['eid']
     result = wialon_api.avl_evts()
-    print result
 except WialonError as e:
-    print e
+    pass
 ```
     
 API Documentation

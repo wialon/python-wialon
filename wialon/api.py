@@ -175,6 +175,5 @@ if __name__ == '__main__':
         result = wialon_api.core_login(user='wialon_test', password='test')
         wialon_api.sid = result['eid']
         result = wialon_api.avl_evts()
-        print result
     except WialonError as e:
-        print e
+        pass
