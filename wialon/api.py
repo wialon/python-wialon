@@ -3,8 +3,9 @@
 
 try:
     from urllib import urlencode
+    from urlparse import urljoin
 except Exception:
-    from urllib.parse import urlencode
+    from urllib.parse import urlencode, urljoin
 
 try:
     from urllib2 import Request, urlopen, HTTPError, URLError
@@ -71,13 +72,15 @@ class Wialon(object):
         self.__default_params = {}
         self.__default_params.update(extra_params)
 
-        self.__base_api_url = (
-            '{scheme}://{host}:{port}/wialon/ajax.html?'.format(
+        self.__base_url = (
+            '{scheme}://{host}:{port}'.format(
                 scheme=scheme,
                 host=host,
                 port=port
             )
         )
+
+        self.__base_api_url = urljoin(self.__base_url, 'wialon/ajax.html?')
 
     @property
     def sid(self):
@@ -93,28 +96,37 @@ class Wialon(object):
         """
         self.__default_params.update(params)
 
+    def avl_evts(self):
+        """
+        Call avl_event request
+        """
+        url = urljoin(self.__base_url, 'avl_evts')
+        params = {
+            'sid': self.sid
+        }
+        return self.request(url, params)
+
     def call(self, action, *argc, **kwargs):
         """
         Call the API method provided with the parameters supplied.
         """
-        url = self.__base_api_url
 
         if (not kwargs):
-            # List params for batch 
+            # List params for batch
             params = json.dumps(argc, ensure_ascii=False)
         else:
             params = json.dumps(kwargs, ensure_ascii=False)
-
         params = {
             'svc': action.replace('_', '/', 1),
             'params': params.encode("utf-8"),
             'sid': self.sid
         }
-
         all_params = self.__default_params.copy()
         all_params.update(params)
-        url_params = urlencode(all_params)
+        return self.request(self.__base_api_url, all_params)
 
+    def request(self, url, params):
+        url_params = urlencode(params)
         data = url_params.encode('utf-8')
         try:
             request = Request(url, data)
@@ -162,5 +174,7 @@ if __name__ == '__main__':
         wialon_api = Wialon()
         result = wialon_api.core_login(user='wialon_test', password='test')
         wialon_api.sid = result['eid']
-    except WialonError:
-        pass
+        result = wialon_api.avl_evts()
+        print result
+    except WialonError as e:
+        print e
