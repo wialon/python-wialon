@@ -104,7 +104,8 @@ class Wialon(object):
         params = {
             'sid': self.sid
         }
-        return self.request(url, params)
+
+        return self.request('avl_evts', url, params)
 
     def call(self, action, *argc, **kwargs):
         """
@@ -123,9 +124,9 @@ class Wialon(object):
         }
         all_params = self.__default_params.copy()
         all_params.update(params)
-        return self.request(self.__base_api_url, all_params)
+        return self.request(action, self.__base_api_url, all_params)
 
-    def request(self, url, params):
+    def request(self, action, url, params):
         url_params = urlencode(params)
         data = url_params.encode('utf-8')
         try:
@@ -175,5 +176,5 @@ if __name__ == '__main__':
         result = wialon_api.core_login(user='wialon_test', password='test')
         wialon_api.sid = result['eid']
         result = wialon_api.avl_evts()
-    except WialonError as e:
+    except WialonError:
         pass
