@@ -116,14 +116,20 @@ class Wialon(object):
         except urllib2.URLError as e:
             raise WialonError(0, unicode(e))
 
+        content_type = response.info().getheader('Content-Type')
+        result = response_content.decode('utf-8', errors='ignore')
         try:
-            result = json.loads(response_content)
+            if content_type == 'application/json':
+                result = json.loads(result)
         except ValueError as e:
             raise WialonError(
+                0,
                 u"Invalid response from Wialon: {0}".format(e),
             )
+
         if (isinstance(result, dict) and 'error' in result):
             raise WialonError(result['error'], action)
+
         errors = []
         if isinstance(result, list):
             # Check for batch errors
@@ -132,9 +138,11 @@ class Wialon(object):
                     continue
                 if "error" in elem:
                     errors.append("%s (%d)" % (WialonError.errors[elem["error"]], elem["error"]))
+
         if (errors):
             errors.append(action)
             raise WialonError(0, " ".join(errors))
+
         return result
 
     def __getattr__(self, action_name):
@@ -146,4 +154,3 @@ class Wialon(object):
             return self.call(action_name, *args, **kwargs)
 
         return get.__get__(self)
-    
