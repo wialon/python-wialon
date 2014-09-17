@@ -154,3 +154,4 @@ class Wialon(object):
             return self.call(action_name, *args, **kwargs)
 
         return get.__get__(self)
+
