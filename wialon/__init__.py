@@ -9,9 +9,9 @@ assert Wialon
 assert WialonError
 
 __author__ = "Alex Chernetsky chal@gurtam.com"
-__copyright__ = ("Copyright 2013, Gurtam; ",)
+__copyright__ = ("Copyright 2013-2016, Gurtam; ",)
 
 __credits__ = ["Alex Chernetsky", "Aleksey Shmigelski"]
-__version__ = "1.0.6"
+__version__ = "1.1.0"
 
 __all__ = ["Wialon"]

@@ -149,7 +149,7 @@ class Wialon(object):
                 u"Invalid response from Wialon: {0}".format(e),
             )
 
-        if (isinstance(result, dict) and 'error' in result):
+        if (isinstance(result, dict) and 'error' in result and result['error'] > 0):
             raise WialonError(result['error'], action)
 
         errors = []
@@ -180,9 +180,13 @@ class Wialon(object):
 if __name__ == '__main__':
     try:
         wialon_api = Wialon()
-        result = wialon_api.core_login(user='wialon_test', password='test')
+        # token/login request
+        token = 'TEST TOKEN HERE'
+        result = wialon_api.token_login(token=token)
         wialon_api.sid = result['eid']
+        # get events
         result = wialon_api.avl_evts()
+        # core/logout request
+        wialon_api.core_logout()
     except WialonError:
         pass
-

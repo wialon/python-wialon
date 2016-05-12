@@ -6,7 +6,7 @@ Wialon
 Installation
 ------------
     pip install python-wialon
-    
+
 Usage
 -----
 
@@ -15,13 +15,17 @@ from wialon import Wialon, WialonError
 
 try:
     wialon_api = Wialon()
-    result = wialon_api.core_login(user='YOUR WIALON USER LOIGN', password='YOUR WIALON USER PASSWORD')
+    # old username and password login is deprecated, use token login
+    result = wialon_api.token_login(token='YOUR WIALON USER TOKEN')
     wialon_api.sid = result['eid']
+
     result = wialon_api.avl_evts()
+
+    wialon_api.core_logout()
 except WialonError as e:
     pass
 ```
-    
+
 API Documentation
 -----------------
 
