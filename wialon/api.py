@@ -138,7 +138,7 @@ class Wialon(object):
         except URLError as e:
             raise WialonError(0, unicode(e))
 
-        content_type = response.info().getheader('Content-Type')
+        content_type = response.info().get('Content-Type')
         result = response_content.decode('utf-8', errors='ignore')
         try:
             if content_type == 'application/json':
