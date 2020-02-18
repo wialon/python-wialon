@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from builtins import str
 
 try:
     from urllib import urlencode
@@ -57,7 +58,7 @@ class WialonError(Exception):
         return u'WialonError({message})'.format(message=message)
 
     def __str__(self):
-        return unicode(self).encode("utf8")
+        return self.__unicode__()
 
     def __repr__(self):
         return str(self)
@@ -117,11 +118,13 @@ class Wialon(object):
             params = json.dumps(argc, ensure_ascii=False)
         else:
             params = json.dumps(kwargs, ensure_ascii=False)
+
         params = {
             'svc': action.replace('_', '/', 1),
             'params': params.encode("utf-8"),
             'sid': self.sid
         }
+
         all_params = self.__default_params.copy()
         all_params.update(params)
         return self.request(action, self.__base_api_url, all_params)
@@ -136,7 +139,7 @@ class Wialon(object):
         except HTTPError as e:
             raise WialonError(0, u"HTTP {code}".format(code=e.code))
         except URLError as e:
-            raise WialonError(0, unicode(e))
+            raise WialonError(0, str(e))
 
         content_type = response.info().get('Content-Type')
         result = response_content.decode('utf-8', errors='ignore')
