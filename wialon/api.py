@@ -115,7 +115,10 @@ class Wialon(object):
 
         if (not kwargs):
             # List params for batch
-            params = json.dumps(argc, ensure_ascii=False)
+            if isinstance(argc, tuple) and len(argc) == 1:
+                params = json.dumps(argc[0], ensure_ascii=False)
+            else:
+                params = json.dumps(argc, ensure_ascii=False)
         else:
             params = json.dumps(kwargs, ensure_ascii=False)
 
