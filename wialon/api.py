@@ -145,9 +145,10 @@ class Wialon(object):
             raise WialonError(0, str(e))
 
         content_type = response.info().get('Content-Type')
-        result = response_content.decode('utf-8', errors='ignore')
+        result = response_content
         try:
             if content_type == 'application/json':
+                result = result.decode('utf-8', errors='ignore')
                 result = json.loads(result)
         except ValueError as e:
             raise WialonError(
