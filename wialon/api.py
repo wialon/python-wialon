@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from builtins import str
+
+try:
+    from builtins import str
+except:
+    str = lambda x: "%s" % x
 
 try:
     from urllib import urlencode

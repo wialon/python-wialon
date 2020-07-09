@@ -12,6 +12,6 @@ __author__ = "Alex Chernetsky chal@gurtam.com"
 __copyright__ = ("Copyright 2013-2016, Gurtam; ",)
 
 __credits__ = ["Alex Chernetsky", "Aleksey Shmigelski", "Mike Turchunovich"]
-__version__ = "1.1.6"
+__version__ = "1.1.7"
 
 __all__ = ["Wialon"]
