@@ -24,6 +24,9 @@ try:
 except ImportError:
     import json
 
+import gzip
+import io
+
 
 class WialonError(Exception):
     """
@@ -69,6 +72,10 @@ class WialonError(Exception):
 
 
 class Wialon(object):
+    request_headers = {
+        'Accept-Encoding': 'gzip, deflate'
+    }
+
     def __init__(self, scheme='http',  host="hst-api.wialon.com", port=80, sid=None, **extra_params):
         """
         Created the Wialon API object.
@@ -136,20 +143,37 @@ class Wialon(object):
         all_params.update(params)
         return self.request(action, self.__base_api_url, all_params)
 
+    def token_login(self, *args, **kwargs):
+        kwargs['appName'] = 'python-wialon'
+        return self.call('token_login', *args, **kwargs)
+
     def request(self, action, url, params):
         url_params = urlencode(params)
         data = url_params.encode('utf-8')
         try:
-            request = Request(url, data)
+            request = Request(url, data, headers=self.request_headers)
             response = urlopen(request)
             response_content = response.read()
         except HTTPError as e:
             raise WialonError(0, u"HTTP {code}".format(code=e.code))
         except URLError as e:
             raise WialonError(0, str(e))
+        
+        response_info = response.info() 
+        content_type = response_info.get('Content-Type')
+        content_encoding = response_info.get('Content-Encoding')
+        
+        if content_encoding == 'gzip':
+            buffer = io.BytesIO(response_content)
+            f = gzip.GzipFile(fileobj=buffer)
+            try:
+                result = f.read()
+            finally:
+                f.close()
+                buffer.close()
+        else:
+            result = response_content
 
-        content_type = response.info().get('Content-Type')
-        result = response_content
         try:
             if content_type == 'application/json':
                 result = result.decode('utf-8', errors='ignore')
