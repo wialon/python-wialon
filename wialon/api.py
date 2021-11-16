@@ -119,7 +119,7 @@ class Wialon(object):
 
         return self.request('avl_evts', url, params)
 
-    def call(self, action, *argc, **kwargs):
+    def call(self, action_name, *argc, **kwargs):
         """
         Call the API method provided with the parameters supplied.
         """
@@ -134,20 +134,20 @@ class Wialon(object):
             params = json.dumps(kwargs, ensure_ascii=False)
 
         params = {
-            'svc': action.replace('_', '/', 1),
+            'svc': action_name.replace('_', '/', 1),
             'params': params.encode("utf-8"),
             'sid': self.sid
         }
 
         all_params = self.__default_params.copy()
         all_params.update(params)
-        return self.request(action, self.__base_api_url, all_params)
+        return self.request(action_name, self.__base_api_url, all_params)
 
     def token_login(self, *args, **kwargs):
         kwargs['appName'] = 'python-wialon'
         return self.call('token_login', *args, **kwargs)
 
-    def request(self, action, url, params):
+    def request(self, action_name, url, params):
         url_params = urlencode(params)
         data = url_params.encode('utf-8')
         try:
@@ -185,7 +185,7 @@ class Wialon(object):
             )
 
         if (isinstance(result, dict) and 'error' in result and result['error'] > 0):
-            raise WialonError(result['error'], action)
+            raise WialonError(result['error'], action_name)
 
         errors = []
         if isinstance(result, list):
@@ -197,7 +197,7 @@ class Wialon(object):
                     errors.append("%s (%d)" % (WialonError.errors[elem["error"]], elem["error"]))
 
         if (errors):
-            errors.append(action)
+            errors.append(action_name)
             raise WialonError(0, " ".join(errors))
 
         return result
