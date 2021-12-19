@@ -39,7 +39,7 @@ class WialonError(Exception):
         3: 'Invalid result',
         4: 'Invalid input',
         5: 'Error performing request',
-        6: 'Unknow error',
+        6: 'Unknown error',
         7: 'Access denied',
         8: 'Invalid user name or password',
         9: 'Authorization server is unavailable, please try again later',
@@ -134,7 +134,7 @@ class Wialon(object):
             params = json.dumps(kwargs, ensure_ascii=False)
 
         params = {
-            'svc': action_name.replace('_', '/', 1),
+            'svc': action_name,
             'params': params.encode("utf-8"),
             'sid': self.sid
         }
@@ -145,7 +145,7 @@ class Wialon(object):
 
     def token_login(self, *args, **kwargs):
         kwargs['appName'] = 'python-wialon'
-        return self.call('token_login', *args, **kwargs)
+        return self.call('token/login', *args, **kwargs)
 
     def request(self, action_name, url, params):
         url_params = urlencode(params)
