@@ -68,13 +68,15 @@ class Wialon(object):
         'Accept-Encoding': 'gzip, deflate'
     }
 
-    def __init__(self, scheme='http',  host="hst-api.wialon.com", port=80, sid=None, **extra_params):
+    def __init__(self, scheme='http', host="hst-api.wialon.com", port=80, token=None, sid=None, **extra_params):
         """
         Created the Wialon API object.
         """
         self._sid = sid
+        self._token = token
         self.__default_params = {}
         self.__default_params.update(extra_params)
+        self.__handlers = []
 
         self.__base_url = (
             '{scheme}://{host}:{port}'.format(
@@ -94,11 +96,36 @@ class Wialon(object):
     def sid(self, value):
         self._sid = value
 
+    @property
+    def token(self):
+        return self._token
+
+    @token.setter
+    def token(self, value):
+        self._token = value
+
     def update_extra_params(self, **params):
         """
         Updated the Wialon API default parameters.
         """
         self.__default_params.update(params)
+
+    def event_handler(self, callback: object):
+        self.__handlers.append(callback)
+
+    def start_poling(self, token=None, timeout=2):
+        if token:
+            self.token = token
+        asyncio.run(self.poling(self.token, timeout))
+
+    async def poling(self, token=None, timeout=2):
+        response = await self.token_login(token=token)
+        self.sid = response['eid']
+        while self.sid:
+            response = await self.avl_evts()
+            for callback in self.__handlers:
+                await callback(WialonEvent(response))
+            await asyncio.sleep(timeout)
 
     async def avl_evts(self):
         """
@@ -135,7 +162,10 @@ class Wialon(object):
         all_params.update(params)
         return await self.request(action_name, self.__base_api_url, all_params)
 
-    async def token_login(self, *args, **kwargs):
+    async def token_login(self, token=None, *args, **kwargs):
+        if token:
+            self.token = token
+        kwargs['token'] = self.token
         kwargs['appName'] = 'python-wialon'
         return await self.call('token_login', *args, **kwargs)
 
@@ -143,7 +173,7 @@ class Wialon(object):
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(url, data=payload, headers=self.request_headers) as response:
-                    result = await response.read()
+                    response_data = await response.read()
                     response_headers = response.headers
                     content_type = response_headers.getone('Content-Type')
 
@@ -161,7 +191,7 @@ class Wialon(object):
 
                     try:
                         if content_type == 'application/json':
-                            result = json.loads(result)
+                            result = json.loads(response_data)
                     except ValueError as e:
                         raise WialonError(
                             0,
@@ -198,30 +228,50 @@ class Wialon(object):
         Enable the calling of Wialon API methods through Python method calls
         of the same name.
         """
-        def get(self, *args, **kwargs):
+        def get(_self, *args, **kwargs):
             return self.call(action_name, *args, **kwargs)
 
         return get.__get__(self, object)
 
 
-async def main(host, token):
-    try:
-        wialon_api = Wialon(host=host)
-        # token/login request
-        result = await wialon_api.token_login(token=token)
-        wialon_api.sid = result['eid']
-
-        # avl_evts request
-        await wialon_api.avl_evts()
-
-        # core/logout request
-        await wialon_api.core_logout()
-    except WialonError:
-        pass
+class WialonEvent (object):
+    def __init__(self, evts):
+        self.tm = evts['tm']
+        self.events = evts['events']
 
 
 if __name__ == '__main__':
-    asyncio.run(main(
-        "host",
-        "TEST TOKEN HERE"
-    ))
+
+    async def main(host, token):
+        """
+        Example of manual using
+        """
+        try:
+            wialon_api = Wialon(host=host)
+            result = await wialon_api.token_login(token=token)
+            wialon_api.sid = result['eid']
+            await wialon_api.avl_evts()
+            await wialon_api.core_logout()
+        except WialonError:
+            pass
+
+    def run():
+        """
+        Poling example
+        """
+
+        wialon_session = Wialon(host='HOST HERE', token='TEST TOKEN HERE')
+
+        @wialon_session.event_handler
+        async def event_handler(event: WialonEvent):
+            spec = {
+                'itemsType': 'avl_unit',
+                'propName': 'sys_name',
+                'propValueMask': '*',
+                'sortType': 'sys_name'
+            }
+            interval = {"from": 0, "to": 0}
+            units = await wialon_session.core_search_items(spec=spec, force=1, flags=5, **interval)
+            print(event.__dict__, units['totalItemsCount'])
+
+        wialon_session.start_poling()

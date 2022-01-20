@@ -13,29 +13,24 @@ Usage
 
 ```python
 import asyncio
-from wialon import Wialon, WialonError
+from wialon import Wialon, WialonEvent, flags
 
-async def main(host, token):
-    try:
-        wialon_api = Wialon(host=host)
-        # token/login request
-        result = await wialon_api.token_login(token=token)
-        wialon_api.sid = result['eid']
+wialon_api = Wialon(host='host',
+                    token='TEST TOKEN HERE')
 
-        # avl_evts request
-        await wialon_api.avl_evts()
+@wialon_api.event_handler
+async def event_handler(event: WialonEvent):
+    spec = {
+        'itemsType': 'avl_unit',
+        'propName': 'sys_name',
+        'propValueMask': '*',
+        'sortType': 'sys_name'
+    }
+    interval = {"from": 0, "to": 0}
+    units = await wialon_api.core_search_items(spec=spec, force=1, flags=flags.ITEM_DATAFLAG_BASE, **interval)
+    print(event.__dict__, units['totalItemsCount'])
 
-        # core/logout request
-        await wialon_api.core_logout()
-    except WialonError:
-        pass
-
-    
-if __name__ == '__main__':
-    asyncio.run(main(
-        "host",
-        "TEST TOKEN HERE"
-    ))
+wialon_api.start_poling()
 ```
 
 API Documentation
