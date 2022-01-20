@@ -13,24 +13,64 @@ Usage
 
 ```python
 import asyncio
-from wialon import Wialon, WialonEvent, flags
+from wialon import Wialon, WialonEvents, flags
 
-wialon_api = Wialon(host='host',
-                    token='TEST TOKEN HERE')
+is_df = True
 
-@wialon_api.event_handler
-async def event_handler(event: WialonEvent):
-    spec = {
-        'itemsType': 'avl_unit',
-        'propName': 'sys_name',
-        'propValueMask': '*',
-        'sortType': 'sys_name'
-    }
-    interval = {"from": 0, "to": 0}
-    units = await wialon_api.core_search_items(spec=spec, force=1, flags=flags.ITEM_DATAFLAG_BASE, **interval)
-    print(event.__dict__, units['totalItemsCount'])
+def run():
+    """
+    Poling example
+    """
+    from wialon import flags
 
-wialon_api.start_poling()
+    wialon_session = Wialon(host='TEST HOST', token='TEST TOCKEN')
+
+    @wialon_session.event_handler
+    async def df_ev(event: WialonEvents):
+        global is_df
+        while is_df:
+            spec = {
+                'itemsType': 'avl_unit',
+                'propName': 'sys_name',
+                'propValueMask': '*',
+                'sortType': 'sys_name'
+            }
+            interval = {"from": 0, "to": 100}
+            units = await wialon_session.core_search_items(spec=spec, force=1, flags=5, **interval)
+            ids = [u['id'] for u in units['items']]
+
+            spec = [
+                {
+                    "type": "col",
+                    "data": ids,
+                    "flags": flags.ITEM_DATAFLAG_BASE + flags.ITEM_UNIT_DATAFLAG_POS,
+                    "mode": 0
+                }
+            ]
+            await wialon_session.core_update_data_flags(spec=spec)
+            is_df = False
+
+    @wialon_session.event_handler
+    async def event_handler(events: WialonEvents):
+        if 116106 in events.data:
+            item_event: WialonEvent = events.data[116106]
+            print(item_event.item, item_event.e_type, item_event.desc)
+
+    @wialon_session.event_handler
+    async def event_handler(events: WialonEvents):
+        spec = {
+            'itemsType': 'avl_unit',
+            'propName': 'sys_name',
+            'propValueMask': '*',
+            'sortType': 'sys_name'
+        }
+        interval = {"from": 0, "to": 0}
+        units = await wialon_session.core_search_items(spec=spec, force=1, flags=5, **interval)
+        print(events.__dict__, units['totalItemsCount'])
+
+    wialon_session.start_poling()
+
+run()
 ```
 
 API Documentation

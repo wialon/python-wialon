@@ -124,7 +124,7 @@ class Wialon(object):
         while self.sid:
             response = await self.avl_evts()
             for callback in self.__handlers:
-                await callback(WialonEvent(response))
+                await callback(WialonEvents(response))
             await asyncio.sleep(timeout)
 
     async def avl_evts(self):
@@ -234,10 +234,43 @@ class Wialon(object):
         return get.__get__(self, object)
 
 
-class WialonEvent (object):
+class WialonEvents(object):
     def __init__(self, evts):
-        self.tm = evts['tm']
-        self.events = evts['events']
+        self.__tm = evts['tm']
+        self.__events = evts['events']
+        self._data = {}
+        self.parse_events()
+
+    @property
+    def data(self):
+        return self._data
+
+    def parse_events(self):
+        for e in self.__events:
+            self._data[e['i']] = WialonEvent(self.__tm, e)
+
+
+class WialonEvent(object):
+    types = {'m': 'Message', 'u': 'Update', 'd': 'Delete'}
+
+    def __init__(self, tm, e):
+        self._tm = tm
+        self._e = e
+        self._item = e['i']
+        self._e_type = self.types[e['t']]
+        self._desc = e['d']
+
+    @property
+    def item(self):
+        return self._item
+
+    @property
+    def desc(self):
+        return self._desc
+
+    @property
+    def e_type(self):
+        return self._e_type
 
 
 if __name__ == '__main__':
@@ -255,15 +288,50 @@ if __name__ == '__main__':
         except WialonError:
             pass
 
+
+    is_df = True
+
     def run():
         """
         Poling example
         """
+        from wialon import flags
 
-        wialon_session = Wialon(host='HOST HERE', token='TEST TOKEN HERE')
+        wialon_session = Wialon(host='TEST HOST', token='TEST TOCKEN')
 
         @wialon_session.event_handler
-        async def event_handler(event: WialonEvent):
+        async def df_ev(event: WialonEvents):
+            global is_df
+            while is_df:
+                spec = {
+                    'itemsType': 'avl_unit',
+                    'propName': 'sys_name',
+                    'propValueMask': '*',
+                    'sortType': 'sys_name'
+                }
+                interval = {"from": 0, "to": 100}
+                units = await wialon_session.core_search_items(spec=spec, force=1, flags=5, **interval)
+                ids = [u['id'] for u in units['items']]
+
+                spec = [
+                    {
+                        "type": "col",
+                        "data": ids,
+                        "flags": flags.ITEM_DATAFLAG_BASE + flags.ITEM_UNIT_DATAFLAG_POS,
+                        "mode": 0
+                    }
+                ]
+                await wialon_session.core_update_data_flags(spec=spec)
+                is_df = False
+
+        @wialon_session.event_handler
+        async def event_handler(events: WialonEvents):
+            if 116106 in events.data:
+                item_event: WialonEvent = events.data[116106]
+                print(item_event.item, item_event.e_type, item_event.desc)
+
+        @wialon_session.event_handler
+        async def event_handler(events: WialonEvents):
             spec = {
                 'itemsType': 'avl_unit',
                 'propName': 'sys_name',
@@ -272,6 +340,8 @@ if __name__ == '__main__':
             }
             interval = {"from": 0, "to": 0}
             units = await wialon_session.core_search_items(spec=spec, force=1, flags=5, **interval)
-            print(event.__dict__, units['totalItemsCount'])
+            print(events.__dict__, units['totalItemsCount'])
 
         wialon_session.start_poling()
+
+    run()

@@ -3,7 +3,7 @@
 
 from . import flags
 
-from .api import Wialon, WialonError, WialonEvent
+from .api import Wialon, WialonError, WialonEvents, WialonEvent
 # Silence potential warnings from static analysis tools:
 assert Wialon
 assert WialonError
