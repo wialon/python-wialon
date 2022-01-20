@@ -8,7 +8,7 @@ from .api import Wialon, WialonError
 assert Wialon
 assert WialonError
 
-__author__ = "Alex Chernetsky chal@gurtam.com"
+__author__ = "o-murphy"
 __copyright__ = ("Copyright 2013-2016, Gurtam; ",)
 
 __credits__ = ["Alex Chernetsky", "Aleksey Shmigelski", "Mike Turchunovich"]

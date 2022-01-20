@@ -1,29 +1,41 @@
-Wialon
+AIO Wialon
 =========
 
-`Wialon` is a Python wrapper for Remote Api. (Now with support for Python 3 since v1.0.2)
+`AIO Wialon` is an async realisation of Python wrapper for Remote Api, 
+forked from https://github.com/wialon/python-wialon. (Now with support for Python 3 since v1.0.2)
 
 Installation
 ------------
-    pip install python-wialon
+    pip install py-aiowialon
 
 Usage
 -----
 
 ```python
+import asyncio
 from wialon import Wialon, WialonError
 
-try:
-    wialon_api = Wialon()
-    # old username and password login is deprecated, use token login
-    result = wialon_api.token_login(token='YOUR WIALON USER TOKEN')
-    wialon_api.sid = result['eid']
+async def main(host, token):
+    try:
+        wialon_api = Wialon(host=host)
+        # token/login request
+        result = await wialon_api.token_login(token=token)
+        wialon_api.sid = result['eid']
 
-    result = wialon_api.avl_evts()
+        # avl_evts request
+        await wialon_api.avl_evts()
 
-    wialon_api.core_logout()
-except WialonError as e:
-    pass
+        # core/logout request
+        await wialon_api.core_logout()
+    except WialonError:
+        pass
+
+    
+if __name__ == '__main__':
+    asyncio.run(main(
+        "host",
+        "TEST TOKEN HERE"
+    ))
 ```
 
 API Documentation

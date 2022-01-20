@@ -20,20 +20,20 @@ CLASSIFIERS = [
     'Topic :: Software Development :: Libraries :: Python Modules'
     ]
 
-KEYWORDS = 'wialon remote api wrapper'
+KEYWORDS = 'async wialon remote api wrapper'
 
-setup(name='python-wialon',
+setup(name='py-aiowialon',
       version=wialon.__version__,
       description="""Wialon Remote API wrapper for Python.""",
       long_description=open('README.md').read(),
       long_description_content_type="text/markdown",
       author=wialon.__author__,
-      url='https://github.com/wialon/python-wialon',
+      url='https://github.com/o-murphy/py-aiowialon',
       packages=find_packages(),
-      download_url='http://pypi.python.org/pypi/python-wialon/',
+      download_url='http://pypi.python.org/pypi/py-aiowialon/',
       classifiers=CLASSIFIERS,
       keywords=KEYWORDS,
       zip_safe=True,
-      install_requires=['simplejson', 'future'],
-      py_modules=['python-wialon']
-)
+      install_requires=['simplejson', 'future', 'aiohttp'],
+      py_modules=['py-aiowialon']
+      )

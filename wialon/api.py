@@ -7,25 +7,17 @@ except:
     str = lambda x: "%s" % x
 
 try:
-    from urllib import urlencode
-    from urlparse import urljoin
-except Exception:
-    from urllib.parse import urlencode, urljoin
-
-try:
-    from urllib2 import Request, urlopen, HTTPError, URLError
-except ImportError:
-    from urllib.request import Request, urlopen
-    from urllib.error import HTTPError, URLError
-
-try:
     import simplejson as json
     assert json  # Silence potential warnings from static analysis tools
 except ImportError:
     import json
 
-import gzip
-import io
+from urllib.parse import urljoin
+import asyncio
+import aiohttp
+from aiohttp.client_exceptions import *
+# import gzip
+# import io
 
 
 class WialonError(Exception):
@@ -58,7 +50,7 @@ class WialonError(Exception):
 
     def __unicode__(self):
         explanation = self._text
-        if (self._code in WialonError.errors):
+        if self._code in WialonError.errors:
             explanation = " ".join([WialonError.errors[self._code], self._text])
 
         message = u'{error} ({code})'.format(error=explanation, code=self._code)
@@ -108,7 +100,7 @@ class Wialon(object):
         """
         self.__default_params.update(params)
 
-    def avl_evts(self):
+    async def avl_evts(self):
         """
         Call avl_event request
         """
@@ -117,14 +109,14 @@ class Wialon(object):
             'sid': self.sid
         }
 
-        return self.request('avl_evts', url, params)
+        return await self.request('avl_evts', url, params)
 
-    def call(self, action_name, *argc, **kwargs):
+    async def call(self, action_name, *argc, **kwargs):
         """
         Call the API method provided with the parameters supplied.
         """
 
-        if (not kwargs):
+        if not kwargs:
             # List params for batch
             if isinstance(argc, tuple) and len(argc) == 1:
                 params = json.dumps(argc[0], ensure_ascii=False)
@@ -135,72 +127,71 @@ class Wialon(object):
 
         params = {
             'svc': action_name.replace('_', '/', 1),
-            'params': params.encode("utf-8"),
+            'params': params,
             'sid': self.sid
         }
 
         all_params = self.__default_params.copy()
         all_params.update(params)
-        return self.request(action_name, self.__base_api_url, all_params)
+        return await self.request(action_name, self.__base_api_url, all_params)
 
-    def token_login(self, *args, **kwargs):
+    async def token_login(self, *args, **kwargs):
         kwargs['appName'] = 'python-wialon'
-        return self.call('token_login', *args, **kwargs)
+        return await self.call('token_login', *args, **kwargs)
 
-    def request(self, action_name, url, params):
-        url_params = urlencode(params)
-        data = url_params.encode('utf-8')
+    async def request(self, action_name, url, payload):
         try:
-            request = Request(url, data, headers=self.request_headers)
-            response = urlopen(request)
-            response_content = response.read()
-        except HTTPError as e:
-            raise WialonError(0, u"HTTP {code}".format(code=e.code))
-        except URLError as e:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, data=payload, headers=self.request_headers) as response:
+                    result = await response.read()
+                    response_headers = response.headers
+                    content_type = response_headers.getone('Content-Type')
+
+                    # content_encoding = response_headers.getone('Content-Encoding')
+                    # if content_encoding == 'gzip':
+                    #     buffer = io.BytesIO(response_content)
+                    #     f = gzip.GzipFile(fileobj=buffer)
+                    #     try:
+                    #         result = f.read()
+                    #     finally:
+                    #         f.close()
+                    #         buffer.close()
+                    # else:
+                    #     result = response_content
+
+                    try:
+                        if content_type == 'application/json':
+                            result = json.loads(result)
+                    except ValueError as e:
+                        raise WialonError(
+                            0,
+                            u"Invalid response from Wialon: {0}".format(e),
+                        )
+
+                    if isinstance(result, dict) and 'error' in result and result['error'] > 0:
+                        raise WialonError(result['error'], action_name)
+
+                    errors = []
+                    if isinstance(result, list):
+                        # Check for batch errors
+                        for elem in result:
+                            if not isinstance(elem, dict):
+                                continue
+                            if "error" in elem:
+                                errors.append("%s (%d)" % (WialonError.errors[elem["error"]], elem["error"]))
+
+                    if errors:
+                        errors.append(action_name)
+                        raise WialonError(0, " ".join(errors))
+
+                    return result
+        except ClientResponseError as e:
+            raise WialonError(0, u"HTTP {code}".format(e.status))
+        except ClientConnectorError as e:
             raise WialonError(0, str(e))
-        
-        response_info = response.info() 
-        content_type = response_info.get('Content-Type')
-        content_encoding = response_info.get('Content-Encoding')
-        
-        if content_encoding == 'gzip':
-            buffer = io.BytesIO(response_content)
-            f = gzip.GzipFile(fileobj=buffer)
-            try:
-                result = f.read()
-            finally:
-                f.close()
-                buffer.close()
-        else:
-            result = response_content
 
-        try:
-            if content_type == 'application/json':
-                result = result.decode('utf-8', errors='ignore')
-                result = json.loads(result)
-        except ValueError as e:
-            raise WialonError(
-                0,
-                u"Invalid response from Wialon: {0}".format(e),
-            )
-
-        if (isinstance(result, dict) and 'error' in result and result['error'] > 0):
-            raise WialonError(result['error'], action_name)
-
-        errors = []
-        if isinstance(result, list):
-            # Check for batch errors
-            for elem in result:
-                if (not isinstance(elem, dict)):
-                    continue
-                if "error" in elem:
-                    errors.append("%s (%d)" % (WialonError.errors[elem["error"]], elem["error"]))
-
-        if (errors):
-            errors.append(action_name)
-            raise WialonError(0, " ".join(errors))
-
-        return result
+        except Exception as err:
+            return err
 
     def __getattr__(self, action_name):
         """
@@ -210,18 +201,27 @@ class Wialon(object):
         def get(self, *args, **kwargs):
             return self.call(action_name, *args, **kwargs)
 
-        return get.__get__(self)
+        return get.__get__(self, object)
 
-if __name__ == '__main__':
+
+async def main(host, token):
     try:
-        wialon_api = Wialon()
+        wialon_api = Wialon(host=host)
         # token/login request
-        token = 'TEST TOKEN HERE'
-        result = wialon_api.token_login(token=token)
+        result = await wialon_api.token_login(token=token)
         wialon_api.sid = result['eid']
-        # get events
-        result = wialon_api.avl_evts()
+
+        # avl_evts request
+        await wialon_api.avl_evts()
+
         # core/logout request
-        wialon_api.core_logout()
+        await wialon_api.core_logout()
     except WialonError:
         pass
+
+
+if __name__ == '__main__':
+    asyncio.run(main(
+        "host",
+        "TEST TOKEN HERE"
+    ))
