@@ -34,6 +34,6 @@ setup(name='py-aiowialon',
       classifiers=CLASSIFIERS,
       keywords=KEYWORDS,
       zip_safe=True,
-      install_requires=['simplejson', 'future', 'aiohttp'],
+      install_requires=['aiohttp', 'simplejson', 'future'],
       py_modules=['aiowialon']
       )

@@ -6,6 +6,7 @@ forked from https://github.com/wialon/python-wialon. (Now with support for Pytho
 
 Installation
 ------------
+    pip install aiohttp, py-aiowialon
     pip install py-aiowialon
 
 Usage

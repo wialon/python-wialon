@@ -14,8 +14,14 @@ except ImportError:
 
 from urllib.parse import urljoin
 import asyncio
-import aiohttp
-from aiohttp.client_exceptions import *
+
+
+try:
+    import aiohttp
+    from aiohttp.client_exceptions import *
+except ImportError:
+    import aiohttp
+
 # import gzip
 # import io
 
