@@ -172,7 +172,7 @@ class Wialon(object):
         if token:
             self.token = token
         kwargs['token'] = self.token
-        kwargs['appName'] = 'python-wialon'
+        kwargs['appName'] = 'py-aiowialon'
         return await self.call('token_login', *args, **kwargs)
 
     async def request(self, action_name, url, payload):
