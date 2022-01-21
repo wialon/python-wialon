@@ -13,7 +13,7 @@ Usage
 
 ```python
 import asyncio
-from wialon import Wialon, WialonEvents, flags
+from aiowialon import Wialon, WialonEvents, flags
 
 is_df = True
 
@@ -21,7 +21,6 @@ def run():
     """
     Poling example
     """
-    from wialon import flags
 
     wialon_session = Wialon(host='TEST HOST', token='TEST TOCKEN')
 

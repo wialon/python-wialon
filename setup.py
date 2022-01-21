@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-import wialon
+import aiowialon
 
 from setuptools import setup, find_packages
 
@@ -23,11 +23,11 @@ CLASSIFIERS = [
 KEYWORDS = 'async wialon remote api wrapper'
 
 setup(name='py-aiowialon',
-      version=wialon.__version__,
+      version=aiowialon.__version__,
       description="""Wialon Remote API wrapper for Python.""",
       long_description=open('README.md').read(),
       long_description_content_type="text/markdown",
-      author=wialon.__author__,
+      author=aiowialon.__author__,
       url='https://github.com/o-murphy/py-aiowialon',
       packages=find_packages(),
       download_url='http://pypi.python.org/pypi/py-aiowialon/',
@@ -35,5 +35,5 @@ setup(name='py-aiowialon',
       keywords=KEYWORDS,
       zip_safe=True,
       install_requires=['simplejson', 'future', 'aiohttp'],
-      py_modules=['py-aiowialon']
+      py_modules=['aiowialon']
       )
