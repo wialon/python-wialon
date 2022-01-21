@@ -301,7 +301,7 @@ if __name__ == '__main__':
         """
         Poling example
         """
-        from wialon import flags
+        from aiowialon import flags
 
         wialon_session = Wialon(host='TEST HOST', token='TEST TOCKEN')
 
