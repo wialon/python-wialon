@@ -302,7 +302,7 @@ if __name__ == '__main__':
         """
         from aiowialon import flags
 
-        wialon_session = Wialon(host='TEST HOST', token='TEST TOCKEN')
+        wialon_session = Wialon(host='TEST HOST', token='TEST TOKEN')
 
         @wialon_session.event_handler
         async def df_ev(event: WialonEvents):
