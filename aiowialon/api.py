@@ -129,8 +129,7 @@ class Wialon(object):
         self.sid = response['eid']
         while self.sid:
             response = await self.avl_evts()
-            for callback in self.__handlers:
-                await callback(WialonEvents(response))
+            await asyncio.gather(*[callback(WialonEvents(response)) for callback in self.__handlers])
             await asyncio.sleep(timeout)
 
     async def avl_evts(self):
@@ -303,7 +302,8 @@ if __name__ == '__main__':
         """
         from aiowialon import flags
 
-        wialon_session = Wialon(host='TEST HOST', token='TEST TOCKEN')
+        # wialon_session = Wialon(host='TEST HOST', token='TEST TOCKEN')
+        wialon_session = Wialon(host='wialon.trans-control.com', token='85e9263961231e21174fb151a77e826206DBDD4EC746A459EA2E201BA8F357DBB12A6073')
 
         @wialon_session.event_handler
         async def df_ev(event: WialonEvents):
