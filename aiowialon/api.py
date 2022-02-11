@@ -131,8 +131,7 @@ class Wialon(object):
         await self.token_login(token=token)
         while self.sid:
             response = await self.avl_evts()
-            for callback in self.__handlers:
-                await callback(WialonEvents(response))
+            await asyncio.gather(*[callback(WialonEvents(response)) for callback in self.__handlers])
             await asyncio.sleep(timeout)
 
     async def avl_evts(self):
