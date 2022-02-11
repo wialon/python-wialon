@@ -22,8 +22,7 @@ try:
 except ImportError:
     import aiohttp
 
-# import gzip
-# import io
+from typing import Callable, Coroutine
 
 
 class WialonError(Exception):
@@ -83,6 +82,7 @@ class Wialon(object):
         self.__default_params = {}
         self.__default_params.update(extra_params)
         self.__handlers = []
+        self._session_did_open = None
 
         self.__base_url = (
             '{scheme}://{host}:{port}'.format(
@@ -110,6 +110,9 @@ class Wialon(object):
     def token(self, value):
         self._token = value
 
+    def session_did_open(self, callback: Callable[[None], Coroutine]):
+        self._session_did_open = callback
+
     def update_extra_params(self, **params):
         """
         Updated the Wialon API default parameters.
@@ -125,8 +128,7 @@ class Wialon(object):
         asyncio.run(self.poling(self.token, timeout))
 
     async def poling(self, token=None, timeout=2):
-        response = await self.token_login(token=token)
-        self.sid = response['eid']
+        await self.token_login(token=token)
         while self.sid:
             response = await self.avl_evts()
             for callback in self.__handlers:
@@ -173,7 +175,12 @@ class Wialon(object):
             self.token = token
         kwargs['token'] = self.token
         kwargs['appName'] = 'py-aiowialon'
-        return await self.call('token_login', *args, **kwargs)
+        sess = await self.call('token_login', *args, **kwargs)
+        if sess:
+            self.sid = sess['eid']
+        if self._session_did_open:
+            await self._session_did_open()
+        return sess
 
     async def request(self, action_name, url, payload):
         try:
@@ -182,18 +189,6 @@ class Wialon(object):
                     response_data = await response.read()
                     response_headers = response.headers
                     content_type = response_headers.getone('Content-Type')
-
-                    # content_encoding = response_headers.getone('Content-Encoding')
-                    # if content_encoding == 'gzip':
-                    #     buffer = io.BytesIO(response_content)
-                    #     f = gzip.GzipFile(fileobj=buffer)
-                    #     try:
-                    #         result = f.read()
-                    #     finally:
-                    #         f.close()
-                    #         buffer.close()
-                    # else:
-                    #     result = response_content
 
                     try:
                         if content_type == 'application/json':
@@ -238,6 +233,9 @@ class Wialon(object):
             return self.call(action_name, *args, **kwargs)
 
         return get.__get__(self, object)
+
+    async def core_use_auth_hash(self, *args, **kwargs):
+        return await self.call('core_use_auth_hash', *args, *kwargs)
 
 
 class WialonEvents(object):
@@ -295,28 +293,24 @@ if __name__ == '__main__':
             pass
 
 
-    is_df = True
-
     def run():
         """
         Poling example
         """
         from aiowialon import flags
 
-        wialon_session = Wialon(host='TEST HOST', token='TEST TOCKEN')
+        wialon_session = Wialon(host='TEST HOST', token='TEST TOKEN')
 
-        @wialon_session.event_handler
-        async def df_ev(event: WialonEvents):
-            global is_df
-            while is_df:
-                spec = {
-                    'itemsType': 'avl_unit',
-                    'propName': 'sys_name',
-                    'propValueMask': '*',
-                    'sortType': 'sys_name'
-                }
-                interval = {"from": 0, "to": 100}
-                units = await wialon_session.core_search_items(spec=spec, force=1, flags=5, **interval)
+        async def session_did_open():
+            spec = {
+                'itemsType': 'avl_unit',
+                'propName': 'sys_name',
+                'propValueMask': '*',
+                'sortType': 'sys_name'
+            }
+            interval = {"from": 0, "to": 100}
+            units = await wialon_session.core_search_items(spec=spec, force=1, flags=5, **interval)
+            if 'items' in units:
                 ids = [u['id'] for u in units['items']]
 
                 spec = [
@@ -328,7 +322,6 @@ if __name__ == '__main__':
                     }
                 ]
                 await wialon_session.core_update_data_flags(spec=spec)
-                is_df = False
 
         @wialon_session.event_handler
         async def event_handler(events: WialonEvents):
@@ -348,6 +341,7 @@ if __name__ == '__main__':
             units = await wialon_session.core_search_items(spec=spec, force=1, flags=5, **interval)
             print(events.__dict__, units['totalItemsCount'])
 
+        wialon_session.session_did_open(callback=session_did_open)
         wialon_session.start_poling()
 
     run()

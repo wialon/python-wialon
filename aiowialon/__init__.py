@@ -12,6 +12,6 @@ __author__ = "o-murphy"
 __copyright__ = ("Copyright 2013-2016, Gurtam; ",)
 
 __credits__ = ["Alex Chernetsky", "Aleksey Shmigelski", "Mike Turchunovich"]
-__version__ = "1.2.2"
+__version__ = "1.2.4"
 
 __all__ = ["Wialon"]
