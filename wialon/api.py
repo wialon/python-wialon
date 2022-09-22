@@ -133,8 +133,15 @@ class Wialon(object):
         else:
             params = json.dumps(kwargs, ensure_ascii=False)
 
+        if action_name.startswith('unit_group'):
+            if len(action_name) < 12:
+                raise ValueError(f'Invalid action name {action_name}')
+            action_name = 'unit_group/' + action_name[11:]
+        else:
+            action_name = action_name.replace('_', '/', 1)
+
         params = {
-            'svc': action_name.replace('_', '/', 1),
+            'svc': action_name,
             'params': params.encode("utf-8"),
             'sid': self.sid
         }
@@ -158,11 +165,11 @@ class Wialon(object):
             raise WialonError(0, u"HTTP {code}".format(code=e.code))
         except URLError as e:
             raise WialonError(0, str(e))
-        
-        response_info = response.info() 
+
+        response_info = response.info()
         content_type = response_info.get('Content-Type')
         content_encoding = response_info.get('Content-Encoding')
-        
+
         if content_encoding == 'gzip':
             buffer = io.BytesIO(response_content)
             f = gzip.GzipFile(fileobj=buffer)
