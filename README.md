@@ -3,6 +3,8 @@ Wialon
 
 `Wialon` is a Python wrapper for Remote Api. (Now with support for Python 3 since v1.0.2)
 
+For async implementation please check [o-murphy:py-aiowialon](https://github.com/o-murphy/py-aiowialon/)
+
 Installation
 ------------
     pip install python-wialon
