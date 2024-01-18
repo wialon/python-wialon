@@ -76,7 +76,7 @@ class Wialon(object):
         'Accept-Encoding': 'gzip, deflate'
     }
 
-    def __init__(self, scheme='http',  host="hst-api.wialon.com", port=80, sid=None, **extra_params):
+    def __init__(self, scheme='https',  host="hst-api.wialon.com", port=443, sid=None, **extra_params):
         """
         Created the Wialon API object.
         """
