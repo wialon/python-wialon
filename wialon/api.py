@@ -39,7 +39,7 @@ class WialonError(Exception):
         3: 'Invalid result',
         4: 'Invalid input',
         5: 'Error performing request',
-        6: 'Unknow error',
+        6: 'Unknown error',
         7: 'Access denied',
         8: 'Invalid user name or password',
         9: 'Authorization server is unavailable, please try again later',
