@@ -108,9 +108,17 @@ ITEM_UNIT_DATAFLAG_COMMAND_ALIASES = 0x00080000
 # TODO
 
 """ User flags """
-#
+# User disabled
+ITEM_USER_USERFLAG_USER_DISABLED = 0x00000001
+# User cannot change password
+ITEM_USER_USERFLAG_CANNOT_CHANGE_PASSWORD = 0x00000002
+# User can create items
 ITEM_USER_USERFLAG_CAN_CREATE_ITEMS = 0x00000004
-# TODO
+# User cannot change settings
+ITEM_USER_USERFLAG_CANNOT_CHANGE_SETTINGS = 0x00000010
+# User can send sms
+ITEM_USER_USERFLAG_CAN_SEND_SMS = 0x00000020
+
 
 """ Item ACL flags """
 # User has at least view access to given item
